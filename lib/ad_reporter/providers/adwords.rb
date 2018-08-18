@@ -3,7 +3,7 @@ module AdReporter
     class Adwords < AdReporter::Provider
       def initialize(provided_config = {})
         super(provided_config)
-        @client = AdwordsApi::Api.new(provided_config)
+        @client = AdwordsApi::Api.new(@config[:filename])
       end
 
       def authorize
@@ -33,6 +33,10 @@ module AdReporter
       end
 
       private
+
+      def default_config_filename
+        File.join(ENV["HOME"], AdwordsApi::ApiConfig.default_config_filename)
+      end
 
       def get_campaigns
         campaigns = []
@@ -143,6 +147,13 @@ module AdReporter
         # adwords.authorize({:oauth2_token => token})
 
         # No exception thrown - we are good to make a request.
+      end
+
+      def create_config_file(filename)
+        FileUtils.cp("lib/ad_reporter/providers/adwords_config_sample.yml", filename)
+        puts "#{filename} is set up. Refer to the given documentation to set the following values: oauth2_client_id, oauth2_client_secret, developer_token, client_customer_id."
+        puts "And restart the script."
+        abort
       end
     end
   end

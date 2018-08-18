@@ -13,7 +13,7 @@ module AdReporter
     end
 
     def run
-      @provider.process
+      process
     end
 
     private

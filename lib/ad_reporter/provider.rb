@@ -9,7 +9,8 @@ module AdReporter
     attr_reader :client
 
     def initialize(provided_config = {})
-      @config = provided_config
+      load_or_create_config_filename(provided_config) if provided_config.class == String
+      load_config_hash(provided_config) if provided_config.class == Hash
     end
 
     def get_campaigns
@@ -22,6 +23,25 @@ module AdReporter
 
     def process
       raise "this method should be overriden"
+    end
+
+    def default_config_filename
+      nil
+    end
+
+    private
+
+    def load_config_hash(provided_config)
+      @config = provided_config
+      if @config[:filename].nil? && !default_config_filename.nil?
+        @config[:filename] = default_config_filename
+        create_config_file(@config[:filename]) unless File.file?(@config[:filename])
+      end
+    end
+
+    def load_or_create_config_filename(provided_config)
+      @config = {filename: provided_config}
+      create_config_file(@config[:filename]) unless File.file?(@config[:filename])
     end
   end
 end
