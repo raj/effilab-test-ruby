@@ -33,20 +33,19 @@ module AdReporter
       def process
         stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
         campaigns = get_campaigns
-        stats[:nb_campaigns] = campaigns.count
-        campaigns.each do |campaign|
-          nb_adg, ids = get_number_of_ad_groups(campaign[:id])
-          values = {
-            id: campaign[:id],
-            name: campaign[:name],
-            status: campaign[:status],
-            nb_adg: nb_adg,
-          }
-          stats[:nb_ad_groups] += nb_adg
+        all_campaigns = []
 
-          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_adg}" % values
+        workers = campaigns.length < 10 ? 1 : 10
+        Parallel.each(lambda { campaigns.pop || Parallel::Stop }, :in_threads => workers) { |data|
+          data[:nb_ad_groups] = get_number_of_ad_groups data[:id]
+          all_campaigns << data
+        }
+
+        stats[:nb_campaigns] = all_campaigns.count
+        stats[:nb_ad_groups] = all_campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
+        all_campaigns.sort_by { |hsh| hsh[:name] }.each do |campaign|
+          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_ad_groups}" % campaign
         end
-
         puts ""
         puts "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}"
         puts ""
@@ -61,7 +60,7 @@ module AdReporter
       end
 
       def get_number_of_ad_groups(campaign_id)
-        [campaign_id + 10, []]
+        campaign_id + 10
       end
     end
   end
