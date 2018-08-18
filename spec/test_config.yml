@@ -1,0 +1,18 @@
+---
+:authentication:
+  :method: OAuth2
+  :oauth2_client_id: client_id
+  :oauth2_client_secret: client_secret
+  :developer_token: "developer_token"
+  :client_customer_id: customer_id
+  :user_agent: ruby effilab-test
+  :oauth2_token:
+    :access_token: access_token
+    :refresh_token: refresh_token
+    :issued_at: 2018-08-18 08:53:52.356351000 +00:00
+    :expires_in: 3600
+    :id_token: 
+:connection:
+  :enable_gzip: false
+:library:
+  :log_level: INFO
