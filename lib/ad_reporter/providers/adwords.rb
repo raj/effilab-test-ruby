@@ -21,7 +21,7 @@ module AdReporter
         campaigns = get_campaigns
         stats[:nb_campaigns] = campaigns.count
         campaigns.each do |campaign|
-          nb_adg, ids = get_number_of_ad_groups(campaign[:id])
+          nb_adg = get_number_of_ad_groups(campaign[:id])
           values = {
             id: campaign[:id],
             name: campaign[:name],
@@ -92,30 +92,18 @@ module AdReporter
           ],
           :paging => {
             :start_index => 0,
-            :number_results => 500,
+            :number_results => 1,
           },
         }
 
-        # Set initial values.
-        offset, page = 0, {}
-
         begin
           page = ad_group_srv.get(selector)
-          if page[:entries]
-            page[:entries].each do |ad_group|
-              ad_group_ids << ad_group[:id]
-            end
-            # Increment values to request the next page.
-            offset += 500
-            selector[:paging][:start_index] = offset
+          if page.include?(:total_num_entries)
+            nb_ad_groups = page[:total_num_entries]
           end
-        end while page[:total_num_entries] > offset
-
-        if page.include?(:total_num_entries)
-          nb_ad_groups = page[:total_num_entries]
         end
 
-        [nb_ad_groups.to_i, ad_group_ids]
+        nb_ad_groups.to_i
       end
 
       def setup_oauth2()
