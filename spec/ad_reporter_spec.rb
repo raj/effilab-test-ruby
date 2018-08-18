@@ -1,13 +1,7 @@
-
-
 RSpec.describe AdReporter do
   before(:each) do
-    @reporter = AdReporter::Reporter.new(:v201806, "spec/test_config.yml")
-    stub_request(:post, "https://accounts.google.com/o/oauth2/token")
-      .to_return(:status => 200,
-                 :body => '{"access_token":"access_token123",' +
-                          '"token_type":"Bearer","expires_in":"3600"}\n',
-                 :headers => {})
+    dummy_provider = AdReporter::Providers::Dummy.new
+    @reporter = AdReporter::Reporter.new(dummy_provider)
     @reporter.authorize
   end
 
