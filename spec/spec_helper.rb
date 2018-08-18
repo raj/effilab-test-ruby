@@ -23,7 +23,7 @@ module AdReporter
   end
 end
 
-# create a fake Provider get_campain & get_number_of_ad_groups
+# create a fake Provider get_campaign & get_number_of_ad_groups
 module AdReporter
   module Providers
     class Dummy
@@ -31,7 +31,6 @@ module AdReporter
       end
 
       def process
-        stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
         campaigns = get_campaigns
         all_campaigns = []
 
@@ -41,14 +40,7 @@ module AdReporter
           all_campaigns << data
         }
 
-        stats[:nb_campaigns] = all_campaigns.count
-        stats[:nb_ad_groups] = all_campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
-        all_campaigns.sort_by { |hsh| hsh[:name] }.each do |campaign|
-          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_ad_groups}" % campaign
-        end
-        puts ""
-        puts "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}"
-        puts ""
+        all_campaigns
       end
 
       def get_campaigns

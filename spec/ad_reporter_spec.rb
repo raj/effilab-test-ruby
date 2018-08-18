@@ -1,7 +1,9 @@
 RSpec.describe AdReporter do
   before(:each) do
     dummy_provider = AdReporter::Providers::Dummy.new
-    @reporter = AdReporter::Reporter.new(dummy_provider)
+    output_manager = AdReporter::OutputManager.new
+    output_manager.add AdReporter::Outputs::PrettyStdout.new
+    @reporter = AdReporter::Reporter.new(dummy_provider, output_manager)
     @reporter.authorize
   end
 
