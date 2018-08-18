@@ -13,6 +13,16 @@ module AdsCommon
   end
 end
 
+# fake process for adwords
+module AdReporter
+  module Providers
+    class Adwords < AdReporter::Provider
+      def process
+      end
+    end
+  end
+end
+
 # create a fake Provider get_campain & get_number_of_ad_groups
 module AdReporter
   module Providers

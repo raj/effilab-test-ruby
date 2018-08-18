@@ -1,8 +1,14 @@
 module AdReporter
   module Providers
     class Adwords < AdReporter::Provider
+      DEFAULT_API_VERSION = :v201806
+
+      # The API client version
+      attr_reader :api_version
+
       def initialize(provided_config = {})
         super(provided_config)
+        @api_version = @config[:api_version].nil? ? DEFAULT_API_VERSION : @config[:api_version].to_sym
         @client = AdwordsApi::Api.new(@config[:filename])
       end
 
