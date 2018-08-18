@@ -13,19 +13,56 @@ module AdsCommon
   end
 end
 
-# mock AdReporter get_campain & get_number_of_ad_groups
+# fake process for adwords
 module AdReporter
-  class Reporter
-    def get_campaigns
-      campaigns = []
-      campaigns << {id: 1, name: "Campaign 1", status: "ENABLED"}
-      campaigns << {id: 2, name: "Campaign 2", status: ""}
-      campaigns << {id: 3, name: "Campaign 3", status: ""}
-      campaigns << {id: 4, name: "Campaign 4", status: ""}
+  module Providers
+    class Adwords < AdReporter::Provider
+      def process
+      end
     end
+  end
+end
 
-    def get_number_of_ad_groups(campaign_id)
-      [campaign_id + 10, []]
+# create a fake Provider get_campain & get_number_of_ad_groups
+module AdReporter
+  module Providers
+    class Dummy
+      def authorize
+      end
+
+      def process
+        stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
+        campaigns = get_campaigns
+        stats[:nb_campaigns] = campaigns.count
+        campaigns.each do |campaign|
+          nb_adg, ids = get_number_of_ad_groups(campaign[:id])
+          values = {
+            id: campaign[:id],
+            name: campaign[:name],
+            status: campaign[:status],
+            nb_adg: nb_adg,
+          }
+          stats[:nb_ad_groups] += nb_adg
+
+          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_adg}" % values
+        end
+
+        puts ""
+        puts "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}"
+        puts ""
+      end
+
+      def get_campaigns
+        campaigns = []
+        campaigns << {id: 1, name: "Campaign 1", status: "ENABLED"}
+        campaigns << {id: 2, name: "Campaign 2", status: ""}
+        campaigns << {id: 3, name: "Campaign 3", status: ""}
+        campaigns << {id: 4, name: "Campaign 4", status: ""}
+      end
+
+      def get_number_of_ad_groups(campaign_id)
+        [campaign_id + 10, []]
+      end
     end
   end
 end
