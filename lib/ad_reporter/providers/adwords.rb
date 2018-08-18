@@ -1,3 +1,5 @@
+require "parallel"
+
 module AdReporter
   module Providers
     class Adwords < AdReporter::Provider
@@ -10,6 +12,7 @@ module AdReporter
         super(provided_config)
         @api_version = @config[:api_version].nil? ? DEFAULT_API_VERSION : @config[:api_version].to_sym
         @client = AdwordsApi::Api.new(@config[:filename])
+        @campaigns = []
       end
 
       def authorize
@@ -18,21 +21,20 @@ module AdReporter
 
       def process
         stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
-        campaigns = get_campaigns
-        stats[:nb_campaigns] = campaigns.count
-        campaigns.each do |campaign|
-          nb_adg, ids = get_number_of_ad_groups(campaign[:id])
-          values = {
-            id: campaign[:id],
-            name: campaign[:name],
-            status: campaign[:status],
-            nb_adg: nb_adg,
-          }
-          stats[:nb_ad_groups] += nb_adg
+        get_campaigns
+        all_campaigns = []
 
-          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_adg}" % values
+        workers = @campaigns.length < 10 ? 1 : 10
+        Parallel.each(lambda { @campaigns.pop || Parallel::Stop }, :in_threads => workers) { |data|
+          data[:nb_ad_groups] = get_number_of_ad_groups data[:id]
+          all_campaigns << data
+        }
+
+        stats[:nb_campaigns] = all_campaigns.count
+        stats[:nb_ad_groups] = all_campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
+        all_campaigns.sort_by { |hsh| hsh[:name] }.each do |campaign|
+          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_ad_groups}" % campaign
         end
-
         puts ""
         puts "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}"
         puts ""
@@ -44,10 +46,10 @@ module AdReporter
         File.join(ENV["HOME"], AdwordsApi::ApiConfig.default_config_filename)
       end
 
-      def get_campaigns
-        campaigns = []
+      def get_campaigns_for_page(offset = 0, number_per_page = 3)
         campaign_srv = @client.service(:CampaignService, @api_version)
-
+        # Set initial values.
+        page = {}
         # Get all the campaigns for this account.
         selector = {
           :fields => ["Id", "Name", "Status"],
@@ -56,31 +58,34 @@ module AdReporter
           ],
           :paging => {
             :start_index => 0,
-            :number_results => 500,
+            :number_results => number_per_page,
           },
         }
-
-        # Set initial values.
-        offset, page = 0, {}
-
         begin
           page = campaign_srv.get(selector)
           if page[:entries]
             page[:entries].each do |campaign|
-              campaigns << {id: campaign[:id], name: campaign[:name], status: campaign[:status]}
+              @campaigns << {id: campaign[:id], name: campaign[:name], status: campaign[:status]}
             end
-            # Increment values to request the next page.
-            offset += 500
-            selector[:paging][:start_index] = offset
           end
-        end while page[:total_num_entries] > offset
+        end
+        page[:total_num_entries]
+      end
 
-        campaigns
+      def get_campaigns
+        number_per_page = 500
+        total_num_entries = get_campaigns_for_page(0, number_per_page)
+        number_of_page = total_num_entries / number_per_page
+        return if number_of_page == 0
+
+        workers = total_num_entries < number_per_page * 2 ? 1 : 10
+        Parallel.each(lambda { (1...number_of_page + 1).to_a.pop || Parallel::Stop }, :in_threads => workers) { |index|
+          get_campaigns_for_page(index * number_per_page, number_per_page)
+        }
       end
 
       def get_number_of_ad_groups(campaign_id)
         nb_ad_groups = 0
-        ad_group_ids = []
         ad_group_srv = @client.service(:AdGroupService, @api_version)
 
         # Get all the ad groups for this campaign.
@@ -92,30 +97,18 @@ module AdReporter
           ],
           :paging => {
             :start_index => 0,
-            :number_results => 500,
+            :number_results => 1,
           },
         }
 
-        # Set initial values.
-        offset, page = 0, {}
-
         begin
           page = ad_group_srv.get(selector)
-          if page[:entries]
-            page[:entries].each do |ad_group|
-              ad_group_ids << ad_group[:id]
-            end
-            # Increment values to request the next page.
-            offset += 500
-            selector[:paging][:start_index] = offset
+          if page.include?(:total_num_entries)
+            nb_ad_groups = page[:total_num_entries]
           end
-        end while page[:total_num_entries] > offset
-
-        if page.include?(:total_num_entries)
-          nb_ad_groups = page[:total_num_entries]
         end
 
-        [nb_ad_groups.to_i, ad_group_ids]
+        nb_ad_groups.to_i
       end
 
       def setup_oauth2()
