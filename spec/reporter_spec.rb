@@ -2,7 +2,7 @@ RSpec.describe AdReporter::Reporter do
   before(:each) do
     @dummy_provider = AdReporter::Providers::Dummy.new
     @output_manager = AdReporter::OutputManager.new
-    @output_manager.add AdReporter::Outputs::PrettyStdout.new
+    @output_manager.add AdReporter::Outputs::DummyOutput.new
   end
 
   it "raise error without good param" do

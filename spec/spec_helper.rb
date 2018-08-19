@@ -58,6 +58,17 @@ module AdReporter
   end
 end
 
+# create a fake output for clean test output
+module AdReporter
+  module Outputs
+    class DummyOutput < AdReporter::Outputs::Base
+      def format_lines(campaigns); end
+      def format_footer(stats); end
+      def flush; end
+    end
+  end
+end
+
 RSpec.configure do |config|
 
   # Enable flags like --only-failures and --next-failure
