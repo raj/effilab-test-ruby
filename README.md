@@ -43,6 +43,18 @@ This will create 2 files if not present :
 
 You will need to fill information in adwords_api.yml with information provided
 
+
+
+## Launch with docker
+
+```
+cd effilab-test-ruby
+md config
+docker-compose run app
+```
+the config files will be in config directory
+
+
 ## Model diagram
 ![Model diagram](https://github.com/raj/effilab-test-ruby/raw/doc/update-readme/doc/diagram_ad_report.png
 )
@@ -58,6 +70,9 @@ You will need to fill information in adwords_api.yml with information provided
  - Reporter must listen to campaigns data & send information to output manager (see PERFORMANCE WARNING)
  - Create a Queue for all Adwords requests
  - Supervise different jobs when call Adwords request in parallel (catch more errors)
+ - Use a command line interface like Thor or Commander
+ - Configuration from command line mist be possible
+ - Separate default value in config class
 
 ## PERFORMANCE - WARNING 
  - for now if there are too much campaigns, memory will be used because Provider class wait to receive all campaigns and data to send information to class Reporter
