@@ -13,7 +13,7 @@ module AdReporter
     # this methods will write data on each outputs defined in this manager
     def process_data(campaigns = [], stats = {})
       @outputs.each do |output|
-        output.format(campaigns)
+        output.format_lines(campaigns)
         output.format_footer(stats)
         output.flush
       end

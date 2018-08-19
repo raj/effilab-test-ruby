@@ -1,5 +1,10 @@
 require "webmock/rspec"
 require "ad_reporter"
+require "simplecov"
+require "simplecov-console"
+SimpleCov.formatter = SimpleCov::Formatter::Console
+SimpleCov.start
+
 include WebMock::API
 WebMock.disable_net_connect!(allow_localhost: true)
 
@@ -54,6 +59,17 @@ module AdReporter
       def get_number_of_ad_groups(campaign_id)
         campaign_id + 10
       end
+    end
+  end
+end
+
+# create a fake output for clean test output
+module AdReporter
+  module Outputs
+    class DummyOutput < AdReporter::Outputs::Base
+      def format_lines(campaigns); end
+      def format_footer(stats); end
+      def flush; end
     end
   end
 end
