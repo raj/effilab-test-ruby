@@ -1,3 +1,76 @@
+# Ad reporter
+
+## Installation
+
+```
+git clone https://github.com/raj/effilab-test-ruby.git
+cd effilab-test-ruby
+bundle install
+```
+
+## Launch test
+
+```
+cd effilab-test-ruby
+rspec
+```
+
+## Gem installation
+
+```
+cd effilab-test-ruby
+bundle
+gem build ad_reporter.gemspec
+gem install ad_reporter-0.0.1.gem
+```
+
+
+## Usage
+in repository directory
+```
+ruby main.rb
+```
+### with gem installation
+just execute ad_reporter 
+```
+ad_reporter
+```
+
+
+This will create 2 files if not present :
+  - ~/ad_reporter.yml
+  - ~/adwords_api.yml
+
+You will need to fill information in adwords_api.yml with information provided
+
+## Model diagram
+![Model diagram](https://github.com/raj/effilab-test-ruby/raw/doc/update-readme/doc/diagram_ad_report.png
+)
+
+
+## TODO
+
+ - create a ReporterConfig class to better manage different configuration
+ - make "real" stub_request for adwords component
+ - configure Workers number
+ - parallelize output write process
+ - Separate stats compute in a different class
+ - Reporter must listen to campaigns data & send information to output manager (see PERFORMANCE WARNING)
+ - Create a Queue for all Adwords requests
+ - Supervise different jobs when call Adwords request in parallel (catch more errors)
+
+## PERFORMANCE - WARNING 
+ - for now if there are too much campaigns, memory will be used because Provider class wait to receive all campaigns and data to send information to class Reporter
+ - As Adwords api retrieve campaign sorting by name, Provider class can send data for each campaign page (with complete data)
+  - So Reporter will call OutputManager.process for each page of get_campaigns request
+  - And at the end Reporter will send Statistic Information to OutputManager
+
+
+
+
+# Original Effilab Notice After ...
+---
+
 # Effilab technical test for Ruby developers
 This repository provided the basic configuration to focus on the API and Ruby itself rather than on how to connect to Adwords.
 
