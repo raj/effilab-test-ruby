@@ -1,5 +1,10 @@
 require "webmock/rspec"
 require "ad_reporter"
+require "simplecov"
+require "simplecov-console"
+SimpleCov.formatter = SimpleCov::Formatter::Console
+SimpleCov.start
+
 include WebMock::API
 WebMock.disable_net_connect!(allow_localhost: true)
 
