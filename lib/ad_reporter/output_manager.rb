@@ -6,10 +6,10 @@ module AdReporter
       @outputs = []
     end
 
-    def process_data(campaigns = [])
-      #puts campaigns
+    def process_data(campaigns = [], stats = {})
       @outputs.each do |output|
         output.format(campaigns)
+        output.format_footer(stats)
         output.flush
       end
     end

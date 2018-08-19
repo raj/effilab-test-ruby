@@ -20,13 +20,17 @@ module AdReporter
     private
 
     def process
-      campaigns = @provider.process
+      @provider.process
+      campaigns = @provider.campaigns
+      stats = {}
+      stats[:nb_campaigns] = campaigns.count
+      stats[:nb_ad_groups] = campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
       campaigns.sort_by! { |hsh| hsh[:name] }
-      process_outputs campaigns
+      process_outputs campaigns, stats
     end
 
-    def process_outputs(campaigns)
-      @output_manager.process_data campaigns
+    def process_outputs(campaigns, stats)
+      @output_manager.process_data campaigns, stats
     end
   end
 end

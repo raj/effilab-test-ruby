@@ -1,14 +1,14 @@
 module AdReporter
   class Provider
-    # Methods that return the client library configuration. Needs to be
-    # redefined in subclasses.
+    # This config for generic provider
     attr_reader :config
-    # The logger for this Provider object.
-    attr_reader :logger
     # The API client for provider
     attr_reader :client
 
+    attr_reader :campaigns
+
     def initialize(provided_config = {})
+      @campaigns = []
       load_or_create_config_filename(provided_config) if provided_config.class == String
       load_config_hash(provided_config) if provided_config.class == Hash
     end
@@ -22,7 +22,7 @@ module AdReporter
     end
 
     def process
-      raise "this method should be overriden"
+      get_campaigns
     end
 
     def default_config_filename

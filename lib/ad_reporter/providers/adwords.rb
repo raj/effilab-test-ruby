@@ -13,7 +13,6 @@ module AdReporter
         super(provided_config)
         @api_version = @config[:api_version].nil? ? DEFAULT_API_VERSION : @config[:api_version].to_sym
         @client = AdwordsApi::Api.new(@config[:filename])
-        @campaigns = []
       end
 
       def authorize
@@ -21,7 +20,7 @@ module AdReporter
       end
 
       def process
-        get_campaigns
+        super
         all_campaigns = []
 
         workers = @campaigns.length < DEFAULT_WORKER_NUMBER ? 1 : DEFAULT_WORKER_NUMBER
@@ -29,7 +28,7 @@ module AdReporter
           data[:nb_ad_groups] = get_number_of_ad_groups data[:id]
           all_campaigns << data
         }
-        all_campaigns
+        @campaigns = all_campaigns
       end
 
       private
@@ -69,7 +68,6 @@ module AdReporter
         total_num_entries = get_campaigns_for_page(0, number_per_page)
         number_of_page = total_num_entries / number_per_page
         return if number_of_page == 0
-
         workers = total_num_entries < number_per_page * 2 ? 1 : DEFAULT_WORKER_NUMBER
         Parallel.each(lambda { (1...number_of_page + 1).to_a.pop || Parallel::Stop }, :in_threads => workers) { |index|
           get_campaigns_for_page(index * number_per_page, number_per_page)

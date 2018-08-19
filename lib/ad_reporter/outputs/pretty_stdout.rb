@@ -5,26 +5,30 @@ module AdReporter
 
       def initialize
         @lines = []
-        @io = $stdout
+        @footer_lines = []
       end
 
       def format(campaigns)
-        stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
-        stats[:nb_campaigns] = campaigns.count
-        stats[:nb_ad_groups] = campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
         campaigns.each do |campaign|
           @lines << "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_ad_groups}\n" % campaign
         end
-        @lines << "\n"
-        @lines << "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}\n"
-        @lines << "\n"
+      end
+
+      def format_footer(stats = {nb_ad_groups: 0, nb_campaigns: 0})
+        @footer_lines << "\n"
+        @footer_lines << "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}\n"
+        @footer_lines << "\n"
       end
 
       def flush
         @lines.each do |line|
           puts line
         end
+        @footer_lines.each do |line|
+          puts line
+        end
         @lines = []
+        @footer_lines = []
       end
     end
   end

@@ -26,7 +26,7 @@ end
 # create a fake Provider get_campaign & get_number_of_ad_groups
 module AdReporter
   module Providers
-    class Dummy
+    class Dummy < AdReporter::Provider
       def authorize
       end
 
@@ -40,15 +40,15 @@ module AdReporter
           all_campaigns << data
         }
 
-        all_campaigns
+        @campaigns = all_campaigns
       end
 
       def get_campaigns
-        campaigns = []
-        campaigns << {id: 1, name: "Campaign 1", status: "ENABLED"}
-        campaigns << {id: 2, name: "Campaign 2", status: ""}
-        campaigns << {id: 3, name: "Campaign 3", status: ""}
-        campaigns << {id: 4, name: "Campaign 4", status: ""}
+        @campaigns = []
+        @campaigns << {id: 1, name: "Campaign 1", status: "ENABLED"}
+        @campaigns << {id: 2, name: "Campaign 2", status: "PAUSED"}
+        @campaigns << {id: 3, name: "Campaign 3", status: "ENABLED"}
+        @campaigns << {id: 4, name: "Campaign 4", status: "ENABLED"}
       end
 
       def get_number_of_ad_groups(campaign_id)
