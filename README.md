@@ -49,7 +49,7 @@ You will need to fill information in adwords_api.yml with information provided
 
 ```
 cd effilab-test-ruby
-md config
+mkdir config
 docker-compose run app
 ```
 the config files will be in config directory
