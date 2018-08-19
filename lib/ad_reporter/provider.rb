@@ -13,6 +13,16 @@ module AdReporter
       load_config_hash(provided_config) if provided_config.class == Hash
     end
 
+    def process
+      get_campaigns
+    end
+
+    private
+
+    def default_config_filename
+      nil
+    end
+
     def get_campaigns
       raise "this method should be overriden and return the campaign list"
     end
@@ -21,16 +31,7 @@ module AdReporter
       raise "this method should be overriden"
     end
 
-    def process
-      get_campaigns
-    end
-
-    def default_config_filename
-      nil
-    end
-
-    private
-
+    # TODO : separate in a different ConfigProvider class
     def load_config_hash(provided_config)
       @config = provided_config
       if @config[:filename].nil? && !default_config_filename.nil?

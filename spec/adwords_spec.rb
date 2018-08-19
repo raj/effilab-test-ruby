@@ -7,6 +7,12 @@ RSpec.describe AdReporter::Providers::Adwords do
     adword = AdReporter::Providers::Adwords.new
     expect { adword.authorize }.not_to raise_error
   end
+
+  it "has a process method" do
+    adword = AdReporter::Providers::Adwords.new
+    expect(adword.methods.include? "process")
+  end
+
   it "load version in initializer" do
     adword = AdReporter::Providers::Adwords.new({api_version: "v201802"})
     expect(adword.config[:api_version]).to eq "v201802"

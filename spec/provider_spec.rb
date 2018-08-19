@@ -1,3 +1,4 @@
+# Dummy Provider is defined in spec_helper.rb
 RSpec.describe AdReporter::Provider do
   before(:each) do
     @dummy_provider = AdReporter::Providers::Dummy.new

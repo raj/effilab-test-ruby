@@ -1,3 +1,7 @@
+# Manage different output
+# use like this
+# manager = AdReporter::OutputManager.new
+# manager.add  AdReporter::Outputs::PrettyStdout.new
 module AdReporter
   class OutputManager
     attr_reader :outputs
@@ -6,6 +10,7 @@ module AdReporter
       @outputs = []
     end
 
+    # this methods will write data on each outputs defined in this manager
     def process_data(campaigns = [], stats = {})
       @outputs.each do |output|
         output.format(campaigns)
@@ -27,19 +32,6 @@ module AdReporter
     def remove(output)
       @outputs.delete(output)
       output.parent = nil
-    end
-
-    # The 'get_output' method will return a
-    # output component of this class by index.
-    def get_output(index)
-      @outputs[index]
-    end
-
-    # The 'get_outputs' method will return
-    # an array of the output of the current
-    # component.
-    def get_outputs
-      @outputs
     end
   end
 end
