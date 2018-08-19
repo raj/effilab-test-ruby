@@ -8,6 +8,6 @@ adwords_provider = AdReporter::Providers::Adwords.new
 output_manager = AdReporter::OutputManager.new
 output_manager.add DEFAULT_OUTPUT
 
-reporter = AdReporter::Reporter.new(adwords_provider, output_manager)
+reporter = AdReporter::Reporter.new
 reporter.authorize
 reporter.run
