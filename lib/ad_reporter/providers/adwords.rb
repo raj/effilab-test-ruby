@@ -1,9 +1,10 @@
-require "parallel"
 
 module AdReporter
   module Providers
     class Adwords < AdReporter::Provider
       DEFAULT_API_VERSION = :v201806
+      DEFAULT_NBR_PER_PAGE = 500
+      DEFAULT_WORKER_NUMBER = 10
 
       # The API client version
       attr_reader :api_version
@@ -12,7 +13,6 @@ module AdReporter
         super(provided_config)
         @api_version = @config[:api_version].nil? ? DEFAULT_API_VERSION : @config[:api_version].to_sym
         @client = AdwordsApi::Api.new(@config[:filename])
-        @campaigns = []
       end
 
       def authorize
@@ -20,24 +20,15 @@ module AdReporter
       end
 
       def process
-        stats = {nb_ad_groups: 0, nb_keywords: 0, nb_campaigns: 0}
-        get_campaigns
+        super # this will call get_campaigns to retrive all campaings without number_of_ad_groups information
         all_campaigns = []
 
-        workers = @campaigns.length < 10 ? 1 : 10
+        workers = @campaigns.length < DEFAULT_WORKER_NUMBER ? 1 : DEFAULT_WORKER_NUMBER
         Parallel.each(lambda { @campaigns.pop || Parallel::Stop }, :in_threads => workers) { |data|
           data[:nb_ad_groups] = get_number_of_ad_groups data[:id]
           all_campaigns << data
         }
-
-        stats[:nb_campaigns] = all_campaigns.count
-        stats[:nb_ad_groups] = all_campaigns.map { |i| i[:nb_ad_groups] }.inject(0, &:+)
-        all_campaigns.sort_by { |hsh| hsh[:name] }.each do |campaign|
-          puts "%{id} \"%{name}\" [%{status}] AdGroups:%{nb_ad_groups}" % campaign
-        end
-        puts ""
-        puts "Mean number of AdGroups per Campaign: #{stats[:nb_ad_groups] / stats[:nb_campaigns]}"
-        puts ""
+        @campaigns = all_campaigns
       end
 
       private
@@ -46,7 +37,9 @@ module AdReporter
         File.join(ENV["HOME"], AdwordsApi::ApiConfig.default_config_filename)
       end
 
-      def get_campaigns_for_page(offset = 0, number_per_page = 3)
+      # retrieve campaign for one page
+      # is called in parallel by get_campaigns
+      def get_campaigns_for_page(offset = 0, number_per_page = DEFAULT_NBR_PER_PAGE)
         campaign_srv = @client.service(:CampaignService, @api_version)
         # Set initial values.
         page = {}
@@ -72,23 +65,29 @@ module AdReporter
         page[:total_num_entries]
       end
 
+      # main method that call adwords api
+      # get all information about campaigns et set in @campaigns variable
+      # TODO : WARN all campaigns are in memory
       def get_campaigns
-        number_per_page = 500
+        number_per_page = DEFAULT_NBR_PER_PAGE
         total_num_entries = get_campaigns_for_page(0, number_per_page)
         number_of_page = total_num_entries / number_per_page
         return if number_of_page == 0
-
-        workers = total_num_entries < number_per_page * 2 ? 1 : 10
+        workers = total_num_entries < number_per_page * 2 ? 1 : DEFAULT_WORKER_NUMBER
         Parallel.each(lambda { (1...number_of_page + 1).to_a.pop || Parallel::Stop }, :in_threads => workers) { |index|
           get_campaigns_for_page(index * number_per_page, number_per_page)
         }
       end
 
+      # call adwords api to retrive number of ad groups for one campaign
+      # return a integer
       def get_number_of_ad_groups(campaign_id)
         nb_ad_groups = 0
         ad_group_srv = @client.service(:AdGroupService, @api_version)
 
-        # Get all the ad groups for this campaign.
+        # Get only one ad group for this campaign.
+        # we just retrieve total_num_entries information
+        # TODO : separate selector construction in other method or class
         selector = {
           :fields => ["Id"],
           :ordering => [{:field => "Name", :sort_order => "ASCENDING"}],
@@ -148,6 +147,7 @@ module AdReporter
         # No exception thrown - we are good to make a request.
       end
 
+      # this method create the adwords config file if not exist
       def create_config_file(filename)
         FileUtils.cp("lib/ad_reporter/providers/adwords_config_sample.yml", filename)
         puts "#{filename} is set up. Refer to the given documentation to set the following values: oauth2_client_id, oauth2_client_secret, developer_token, client_customer_id."
