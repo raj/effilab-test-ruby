@@ -7,11 +7,12 @@ module AdReporter
   class Reporter
     attr_reader :provider
     attr_reader :output_manager
+    attr_reader :config
 
     # TODO : validate class of params
-    def initialize(provider, output_manager)
-      @provider = provider
-      @output_manager = output_manager
+    def initialize(config = nil)
+      load_or_create_config(config)
+      load_assets()
     end
 
     def authorize
@@ -23,6 +24,32 @@ module AdReporter
     end
 
     private
+
+    def load_or_create_config(config = nil)
+      filename = default_config_filename if config.nil?
+      filename = config if config.class == String
+      @config = config if config.class == Hash
+      if filename
+        create_default_config_file(filename) unless File.file?(filename)
+        @config = YAML.load(File.read(filename))
+      end
+    end
+
+    def load_assets
+      @provider = Kernel.const_get(@config[:ad_reporter][:provider]).new
+      @output_manager = AdReporter::OutputManager.new
+      @config[:ad_reporter][:outputs].each do |output|
+        @output_manager.add Kernel.const_get(output).new
+      end
+    end
+
+    def default_config_filename
+      File.join(ENV["HOME"], "ad_reporter.yml")
+    end
+
+    def create_default_config_file(filename)
+      FileUtils.cp("ad_reporter.yml.sample", filename)
+    end
 
     # this method will retrieve data from provider
     # and send this data to output_manager
